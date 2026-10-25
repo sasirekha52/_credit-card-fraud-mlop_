@@ -13,3 +13,4 @@ mlflow.db
 .ipynb_checkpoints/
 *.log
 models/*.joblib
+reports/monitoring/
