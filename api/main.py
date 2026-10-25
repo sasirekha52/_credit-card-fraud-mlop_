@@ -44,6 +44,14 @@ async def lifespan(app: FastAPI):
         app.state.model, app.state.info = load_model()
     except Exception as exc:  # keep the API alive so /health can report the problem
         app.state.error = str(exc)
+
+    if app.state.model is not None:
+        try:
+            # Warm-up: one throwaway prediction, so the first real request isn't slow
+            dummy = pd.DataFrame([{c: 0.0 for c in app.state.info["features"]}])
+            app.state.model.predict_proba(dummy)
+        except Exception as exc:
+            logger.warning("Warm-up prediction failed (%s)", type(exc).__name__)
     yield
 
 
