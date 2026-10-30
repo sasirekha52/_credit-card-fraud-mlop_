@@ -188,7 +188,25 @@ except (OSError, KeyError, json.JSONDecodeError):
     
 # ---------- drift ----------
 st.subheader("Data drift and monitoring")
-st.info("Drift monitoring is not implemented yet. It will be added with Evidently AI.")
+try:
+    drift = json.loads((ROOT / "reports" / "monitoring" / "drift_status.json").read_text())
+    for label, part in [("Input features vs training data", drift["features"]),
+                        ("Prediction scores vs validation data", drift["scores"])]:
+        text_line = f"**{label}:** {part['status'].replace('_', ' ')} ({part['rows']} rows checked)"
+        if part["status"] == "alert":
+            st.warning(text_line + f", {part['drift_share']:.0%} of columns above their noise threshold")
+        elif part["status"] == "ok":
+            st.success(text_line)
+        else:
+            st.info(text_line + f", needs at least {part['min_rows']}")
+    st.caption(
+        f"Last check: {drift['checked_at']}. Update with `python monitoring\\check_drift.py`. "
+        "Simulated data replays test-period transactions, so an alert mainly reflects the time "
+        "shift from the training period, not a fault. Drift is not the same as lower accuracy: "
+        "true performance is only known for rows with labels."
+    )
+except (OSError, KeyError, json.JSONDecodeError):
+    st.info("No drift check has been run yet. Run `python monitoring\\check_drift.py`.")
 
 # ---------- history ----------
 st.subheader("Prediction history")
