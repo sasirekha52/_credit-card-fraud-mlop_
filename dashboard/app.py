@@ -14,8 +14,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from api.db import engine
-
-API_URL = "http://127.0.0.1:8000"
+API_URL = os.environ.get("API_URL", "http://127.0.0.1:8000")
 THRESHOLD_FILE = ROOT / "models" / "model_info.json"
 
 st.set_page_config(page_title="Fraud Risk Monitor", layout="wide")

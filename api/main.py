@@ -11,8 +11,8 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import SQLAlchemyError
 
-from api.db import SessionLocal
-from api.db_models import Prediction, PredictionFeatures
+from api.db import SessionLocal, engine
+from api.db_models import Base, Prediction, PredictionFeatures
 from api.model_loader import load_model
 from api.schemas import (
     HealthResponse,
@@ -52,6 +52,10 @@ async def lifespan(app: FastAPI):
             app.state.model.predict_proba(dummy)
         except Exception as exc:
             logger.warning("Warm-up prediction failed (%s)", type(exc).__name__)
+    try:
+        Base.metadata.create_all(engine)  # creates tables only if they don't exist
+    except SQLAlchemyError as exc:
+        logger.warning("Could not create tables (%s)", type(exc).__name__)        
     yield
 
 
