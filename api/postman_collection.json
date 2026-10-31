@@ -1,0 +1,220 @@
+{
+  "info": {
+    "name": "Fraud Risk API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"model is loaded\", function () { pm.expect(pm.response.json().model_loaded).to.eql(true); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Predict: legitimate sample",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"probability is between 0 and 1\", function () { var p = pm.response.json().fraud_probability; pm.expect(p).to.be.within(0, 1); });",
+              "pm.test(\"decision matches threshold\", function () { var b = pm.response.json(); pm.expect(b.decision === \"flag_for_review\").to.eql(b.fraud_probability >= b.threshold); });",
+              "pm.test(\"states it is a risk signal\", function () { pm.expect(pm.response.json().note).to.include(\"not proof of fraud\"); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/predict",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transaction_id\": \"sample-legit\",\n  \"features\": {\n    \"V1\": 0.193178838801632,\n    \"V2\": 0.616616849183948,\n    \"V3\": -2.36496811289188,\n    \"V4\": -1.24091388155589,\n    \"V5\": 2.69308084821665,\n    \"V6\": 3.32577704482115,\n    \"V7\": -0.243320595412265,\n    \"V8\": 1.332510658072,\n    \"V9\": 0.0704262596073638,\n    \"V10\": -1.18196799902714,\n    \"V11\": -0.358966801181425,\n    \"V12\": 0.0628807232494757,\n    \"V13\": -0.430500264928953,\n    \"V14\": -0.784609504419714,\n    \"V15\": -0.61795951988236,\n    \"V16\": 0.0722543509004619,\n    \"V17\": 0.757087186275772,\n    \"V18\": -0.003669046661131,\n    \"V19\": -0.494952883117631,\n    \"V20\": -0.257419890631234,\n    \"V21\": 0.139113426494473,\n    \"V22\": 0.41562248267367,\n    \"V23\": 0.0567120829867667,\n    \"V24\": 0.661799531091144,\n    \"V25\": -0.568237819069093,\n    \"V26\": 0.494023732980526,\n    \"V27\": -0.0765854545309525,\n    \"V28\": -0.0421006292549428,\n    \"Amount\": 5.0\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "Predict: fraud sample",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"probability is between 0 and 1\", function () { var p = pm.response.json().fraud_probability; pm.expect(p).to.be.within(0, 1); });",
+              "pm.test(\"decision matches threshold\", function () { var b = pm.response.json(); pm.expect(b.decision === \"flag_for_review\").to.eql(b.fraud_probability >= b.threshold); });",
+              "pm.test(\"states it is a risk signal\", function () { pm.expect(pm.response.json().note).to.include(\"not proof of fraud\"); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/predict",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transaction_id\": \"sample-fraud\",\n  \"features\": {\n    \"V1\": -5.48803217118325,\n    \"V2\": 3.32956068110382,\n    \"V3\": -5.99629608663308,\n    \"V4\": 3.6017196361428,\n    \"V5\": -2.02392603601173,\n    \"V6\": -1.73739347660971,\n    \"V7\": -4.39685932040737,\n    \"V8\": 0.228394067739377,\n    \"V9\": -1.67588392283112,\n    \"V10\": -3.99178463209724,\n    \"V11\": 3.73703768128326,\n    \"V12\": -6.15018666957144,\n    \"V13\": 0.28873807103962,\n    \"V14\": -8.76069451926062,\n    \"V15\": 2.3446511946564,\n    \"V16\": -5.14563785073948,\n    \"V17\": -6.29347862779442,\n    \"V18\": -2.13718660093444,\n    \"V19\": 2.99524475453849,\n    \"V20\": -0.551121114938378,\n    \"V21\": 1.71963125994928,\n    \"V22\": 0.343209160294469,\n    \"V23\": 0.133583641611928,\n    \"V24\": 0.833339534034596,\n    \"V25\": -0.839775663207077,\n    \"V26\": 0.502009639296227,\n    \"V27\": -1.93747284570186,\n    \"V28\": 1.52121837279368,\n    \"Amount\": 0.01\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "Invalid: missing V5 (expects 422)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 422\", function () { pm.response.to.have.status(422); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/predict",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transaction_id\": \"sample-legit\",\n  \"features\": {\n    \"V1\": 0.193178838801632,\n    \"V2\": 0.616616849183948,\n    \"V3\": -2.36496811289188,\n    \"V4\": -1.24091388155589,\n    \"V6\": 3.32577704482115,\n    \"V7\": -0.243320595412265,\n    \"V8\": 1.332510658072,\n    \"V9\": 0.0704262596073638,\n    \"V10\": -1.18196799902714,\n    \"V11\": -0.358966801181425,\n    \"V12\": 0.0628807232494757,\n    \"V13\": -0.430500264928953,\n    \"V14\": -0.784609504419714,\n    \"V15\": -0.61795951988236,\n    \"V16\": 0.0722543509004619,\n    \"V17\": 0.757087186275772,\n    \"V18\": -0.003669046661131,\n    \"V19\": -0.494952883117631,\n    \"V20\": -0.257419890631234,\n    \"V21\": 0.139113426494473,\n    \"V22\": 0.41562248267367,\n    \"V23\": 0.0567120829867667,\n    \"V24\": 0.661799531091144,\n    \"V25\": -0.568237819069093,\n    \"V26\": 0.494023732980526,\n    \"V27\": -0.0765854545309525,\n    \"V28\": -0.0421006292549428,\n    \"Amount\": 5.0\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "Invalid: negative amount (expects 422)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 422\", function () { pm.response.to.have.status(422); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/predict",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transaction_id\": \"sample-legit\",\n  \"features\": {\n    \"V1\": 0.193178838801632,\n    \"V2\": 0.616616849183948,\n    \"V3\": -2.36496811289188,\n    \"V4\": -1.24091388155589,\n    \"V5\": 2.69308084821665,\n    \"V6\": 3.32577704482115,\n    \"V7\": -0.243320595412265,\n    \"V8\": 1.332510658072,\n    \"V9\": 0.0704262596073638,\n    \"V10\": -1.18196799902714,\n    \"V11\": -0.358966801181425,\n    \"V12\": 0.0628807232494757,\n    \"V13\": -0.430500264928953,\n    \"V14\": -0.784609504419714,\n    \"V15\": -0.61795951988236,\n    \"V16\": 0.0722543509004619,\n    \"V17\": 0.757087186275772,\n    \"V18\": -0.003669046661131,\n    \"V19\": -0.494952883117631,\n    \"V20\": -0.257419890631234,\n    \"V21\": 0.139113426494473,\n    \"V22\": 0.41562248267367,\n    \"V23\": 0.0567120829867667,\n    \"V24\": 0.661799531091144,\n    \"V25\": -0.568237819069093,\n    \"V26\": 0.494023732980526,\n    \"V27\": -0.0765854545309525,\n    \"V28\": -0.0421006292549428,\n    \"Amount\": -5\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "Invalid: non-numeric V1 (expects 422)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 422\", function () { pm.response.to.have.status(422); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/predict",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transaction_id\": \"sample-legit\",\n  \"features\": {\n    \"V1\": \"abc\",\n    \"V2\": 0.616616849183948,\n    \"V3\": -2.36496811289188,\n    \"V4\": -1.24091388155589,\n    \"V5\": 2.69308084821665,\n    \"V6\": 3.32577704482115,\n    \"V7\": -0.243320595412265,\n    \"V8\": 1.332510658072,\n    \"V9\": 0.0704262596073638,\n    \"V10\": -1.18196799902714,\n    \"V11\": -0.358966801181425,\n    \"V12\": 0.0628807232494757,\n    \"V13\": -0.430500264928953,\n    \"V14\": -0.784609504419714,\n    \"V15\": -0.61795951988236,\n    \"V16\": 0.0722543509004619,\n    \"V17\": 0.757087186275772,\n    \"V18\": -0.003669046661131,\n    \"V19\": -0.494952883117631,\n    \"V20\": -0.257419890631234,\n    \"V21\": 0.139113426494473,\n    \"V22\": 0.41562248267367,\n    \"V23\": 0.0567120829867667,\n    \"V24\": 0.661799531091144,\n    \"V25\": -0.568237819069093,\n    \"V26\": 0.494023732980526,\n    \"V27\": -0.0765854545309525,\n    \"V28\": -0.0421006292549428,\n    \"Amount\": 5.0\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "Recent transactions",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"returns a list\", function () { pm.expect(pm.response.json().transactions).to.be.an(\"array\"); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/transactions?limit=5"
+      }
+    },
+    {
+      "name": "Operational metrics",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"reports database availability\", function () { pm.expect(pm.response.json()).to.have.property(\"database_available\"); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/metrics"
+      }
+    }
+  ]
+}
