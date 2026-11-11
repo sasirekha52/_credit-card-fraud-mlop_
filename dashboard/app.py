@@ -10,12 +10,30 @@ import pandas as pd
 import plotly.express as px
 import requests
 import streamlit as st
+from dotenv import load_dotenv
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from api.db import engine
+load_dotenv()
+
+# ---------- demo mode ----------
+# With no database settings (for example on Streamlit Cloud), the dashboard reads a saved
+# sample from dashboard/demo_data instead of PostgreSQL and the API.
+DEMO_DIR = ROOT / "dashboard" / "demo_data"
+DEMO = os.environ.get("DEMO_MODE") == "1" or not os.environ.get("POSTGRES_HOST")
+if not DEMO:
+    from api.db import engine
+
 API_URL = os.environ.get("API_URL", "http://127.0.0.1:8000")
-THRESHOLD_FILE = ROOT / "models" / "model_info.json"
+
+
+def data_file(demo_name: str, live_path: Path) -> Path:
+    return DEMO_DIR / demo_name if DEMO else live_path
+
+
+THRESHOLD_FILE = data_file("model_info.json", ROOT / "models" / "model_info.json")
+EVALUATION_FILE = data_file("test_evaluation.json", ROOT / "reports" / "test_evaluation.json")
+DRIFT_FILE = data_file("drift_status.json", ROOT / "reports" / "monitoring" / "drift_status.json")
 
 st.set_page_config(page_title="Fraud Risk Monitor", layout="wide")
 
@@ -24,6 +42,10 @@ st.set_page_config(page_title="Fraud Risk Monitor", layout="wide")
 @st.cache_data(ttl=5)
 def load_predictions() -> pd.DataFrame | None:
     """Latest 5000 predictions from PostgreSQL, or None if the database is unreachable."""
+    if DEMO:
+        demo_df = pd.read_csv(DEMO_DIR / "predictions.csv")
+        demo_df["created_at"] = pd.to_datetime(demo_df["created_at"], utc=True)
+        return demo_df
     query = text(
         """
         SELECT request_id, transaction_id, created_at, fraud_probability, threshold,
@@ -44,6 +66,11 @@ def load_predictions() -> pd.DataFrame | None:
 
 @st.cache_data(ttl=5)
 def api_get(path: str) -> dict | None:
+    if DEMO:
+        try:
+            return json.loads((DEMO_DIR / f"{path.strip('/')}.json").read_text())
+        except OSError:
+            return None
     try:
         resp = requests.get(f"{API_URL}{path}", timeout=3)
         resp.raise_for_status()
@@ -58,6 +85,9 @@ st.caption(
     "Predictions are risk signals from a statistical model, not proof of fraud. "
     "Transactions marked 'simulated' are replayed historical data, not a live bank feed."
 )
+if DEMO:
+    st.info("Demo mode: this page shows a saved sample from my local run. The full system "
+            "(API, PostgreSQL, MLflow) runs with Docker Compose. See the README.")
 if st.button("Refresh data"):
     st.cache_data.clear()
     st.rerun()
@@ -172,7 +202,7 @@ else:
 st.subheader("Model information")
 try:
     info = json.loads(THRESHOLD_FILE.read_text())
-    evaluation = json.loads((ROOT / "reports" / "test_evaluation.json").read_text())
+    evaluation = json.loads(EVALUATION_FILE.read_text())
     t = evaluation["test"]
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Registered model", f"{info['model_name']} v{info['model_version']}")
@@ -185,11 +215,11 @@ try:
     )
 except (OSError, KeyError, json.JSONDecodeError):
     st.info("Model information files were not found.")
-    
+
 # ---------- drift ----------
 st.subheader("Data drift and monitoring")
 try:
-    drift = json.loads((ROOT / "reports" / "monitoring" / "drift_status.json").read_text())
+    drift = json.loads(DRIFT_FILE.read_text())
     for label, part in [("Input features vs training data", drift["features"]),
                         ("Prediction scores vs validation data", drift["scores"])]:
         text_line = f"**{label}:** {part['status'].replace('_', ' ')} ({part['rows']} rows checked)"
