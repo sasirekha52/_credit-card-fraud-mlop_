@@ -1,0 +1,7 @@
+{
+  "status": "snapshot",
+  "model_name": "fraud-detector",
+  "model_version": "1",
+  "model_loaded": true,
+  "database": "snapshot"
+}

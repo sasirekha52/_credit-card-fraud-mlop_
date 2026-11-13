@@ -1,0 +1,57 @@
+{
+  "checked_at": "2026-10-31T17:14:12.509442+00:00",
+  "features": {
+    "rows": 484,
+    "min_rows": 200,
+    "share_alert": 0.3,
+    "status": "alert",
+    "drift_share": 0.793,
+    "drifted_columns": [
+      "V3",
+      "V14",
+      "V25",
+      "V11",
+      "V15",
+      "V12",
+      "V5",
+      "V4",
+      "V22",
+      "V17",
+      "V6",
+      "V26",
+      "V1",
+      "V18",
+      "V13",
+      "V19",
+      "V10",
+      "V23",
+      "V9",
+      "V24",
+      "V28",
+      "V27",
+      "V16"
+    ],
+    "top_columns": {
+      "V3": 0.853,
+      "V14": 0.486,
+      "V25": 0.419,
+      "V11": 0.346,
+      "V15": 0.302
+    }
+  },
+  "scores": {
+    "rows": 484,
+    "min_rows": 200,
+    "share_alert": 0.3,
+    "status": "alert",
+    "drift_share": 1.0,
+    "drifted_columns": [
+      "fraud_probability"
+    ],
+    "top_columns": {
+      "fraud_probability": 0.826
+    },
+    "flag_rate_reference": 0.0014,
+    "flag_rate_current": 0.0331
+  }
+}
