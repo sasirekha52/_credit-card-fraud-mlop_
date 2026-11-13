@@ -1,8 +1,10 @@
-# Real-Time Credit Card Fraud Detection with ML Monitoring 
-app URL (https://credit-card-fraud-mlop-ataadyebjzew8m52rubzyq.streamlit.app/)
+# Real-Time Credit Card Fraud Detection with ML Monitoring
 
 An end-to-end MLOps project: a fraud model served through an API, every prediction logged to a database, and a monitoring layer that warns when incoming data drifts away from what the model was trained on.
 
+**Live demo (sample data):** **[(https://credit-card-fraud-mlop-ataadyebjzew8m52rubzyq.streamlit.app/)]**
+
+The live page runs in demo mode on a saved sample from my local run. The full system runs with Docker Compose (see below). The app may take a moment to wake up if nobody has visited recently.
 
 ## Why this project
 
@@ -18,6 +20,7 @@ Fraud is rare (under 0.2% of transactions in the Kaggle dataset), so accuracy al
 - Simulates live traffic, then compares predictions with ground-truth labels on a Streamlit dashboard.
 - Produces Evidently drift reports with calibrated alert logic.
 - Runs all services together with Docker Compose.
+- Publishes a read-only demo of the dashboard on Streamlit Community Cloud, using a saved sample of the data.
 
 ## Architecture
 
@@ -43,7 +46,7 @@ flowchart LR
 | Dashboard | Streamlit, Plotly |
 | Monitoring | Evidently |
 | Testing | Pytest, httpx, Postman |
-| Packaging | Docker, Docker Compose |
+| Packaging and deployment | Docker, Docker Compose, Streamlit Community Cloud (demo) |
 
 ## Dataset
 
@@ -55,8 +58,11 @@ Kaggle credit card fraud dataset (`creditcard.csv`): anonymised features `V1` to
 credit-card-fraud-mlops/
 ├── api/           FastAPI service
 ├── dashboard/     Streamlit dashboard
+│   ├── app.py
+│   ├── requirements.txt   (slim, for Streamlit Cloud)
+│   └── demo_data/         saved sample used by the live demo
 ├── monitoring/    Drift checks and Evidently reports
-├── src/           Preprocessing, training, model code
+├── src/           Preprocessing, training, model code, export_demo_data.py
 ├── notebooks/     Exploration and validation
 ├── models/        Saved model (final_model.joblib, git-ignored)
 ├── tests/         Pytest suite
@@ -80,14 +86,9 @@ credit-card-fraud-mlops/
 ## Results
 
 | Model | PR-AUC | ROC-AUC |
-|---|---|---|
-| Logistic Regression | **[TODO]** | **[TODO]** |
-| Random Forest | **[TODO]** | **[TODO]** |
-| XGBoost | **[TODO]** | **[TODO]** |
+| XGBoost | **[0.87]** | **[0.98]** |
 
-Final model: **[TODO: name]**. Test-set precision and recall at threshold 0.3649: **[TODO]**.
-
-Copy these numbers from the MLflow compare screen.
+Final model: **[XGBoost]**. Test-set precision 0.70 and recall at threshold 0.3649: **[TODO]**.
 
 ### Error analysis
 
@@ -142,6 +143,34 @@ docker compose up --build
 
 This starts PostgreSQL, MLflow, the API and the dashboard. Check `docker-compose.yml` for the exact ports. The model file is git-ignored, so copy it into `models/` before building.
 
+## Live demo (Streamlit Community Cloud)
+
+The cloud app cannot reach my local PostgreSQL or API, so the dashboard has a demo mode. It turns on when no `POSTGRES_HOST` setting exists, or when `DEMO_MODE=1`. In demo mode the dashboard reads the files in `dashboard/demo_data/` instead:
+
+- `predictions.csv`: a sample of logged predictions (all labelled rows, plus recent ones).
+- `model_info.json`, `test_evaluation.json`, `drift_status.json`: model and monitoring summaries.
+- `health.json`, `metrics.json`: a snapshot of the API status and latency.
+
+A banner on the page says it is a demo. With the database settings present, such as on my laptop or in Docker Compose, the dashboard works as normal.
+
+Try demo mode locally:
+
+```powershell
+$env:DEMO_MODE = "1"
+streamlit run dashboard\app.py
+```
+
+Refresh the sample after retraining or a new drift check, then commit and push the folder:
+
+```powershell
+python src\export_demo_data.py
+git add dashboard/demo_data
+git commit -m "refresh demo data"
+git push
+```
+
+To deploy, choose `dashboard/app.py` as the main file on Streamlit Community Cloud and do not add database secrets, because they would turn demo mode off.
+
 ## Tests
 
 ```powershell
@@ -161,6 +190,7 @@ pytest
 ## Limitations
 
 - Live traffic is simulated from held-out dataset rows, not real payments.
+- The live demo shows a saved sample, not the running API and database. It must be refreshed by hand, and its numbers are only as current as the last export.
 - Docker Compose was tested in GitHub Codespaces, not on the development laptop.
 - Postman response times were distorted by load on the development laptop. Use the API's own `/metrics` latency for performance figures.
 - The model, data and MLflow database are git-ignored, so a fresh clone must train or supply its own model file.
@@ -175,4 +205,4 @@ pytest
 
 ## Author
 
-**[TODO: Sasirekha]**, [GitHub profile link (https://github.com/sasirekha52)]
+**[Sasirekha]**, [[GitHub profile link](https://github.com/sasirekha52)]
