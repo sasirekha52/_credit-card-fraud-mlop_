@@ -1,8 +1,8 @@
-# Real-Time Credit Card Fraud Detection with ML Monitoring
+# Real-Time Credit Card Fraud Detection with ML Monitoring 
+app URL (https://credit-card-fraud-mlop-ataadyebjzew8m52rubzyq.streamlit.app/)
 
 An end-to-end MLOps project: a fraud model served through an API, every prediction logged to a database, and a monitoring layer that warns when incoming data drifts away from what the model was trained on.
 
-> Items marked **[TODO]** need your own numbers or names. Replace them, then delete this line.
 
 ## Why this project
 
